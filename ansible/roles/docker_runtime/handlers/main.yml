@@ -1,0 +1,5 @@
+---
+- name: 重启 docker 使 daemon.json 生效
+  systemd:
+    name: docker
+    state: restarted

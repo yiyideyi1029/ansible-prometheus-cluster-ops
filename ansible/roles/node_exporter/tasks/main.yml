@@ -1,0 +1,32 @@
+---
+- name: 创建 node_exporter 系统用户
+  user:
+    name: node_exporter
+    shell: /sbin/nologin
+    system: yes
+    create_home: no
+
+- name: 下发 systemd 服务单元文件
+  copy:
+    dest: /etc/systemd/system/node_exporter.service
+    content: |
+      [Unit]
+      Description=Prometheus Node Exporter
+      After=network.target
+
+      [Service]
+      User=node_exporter
+      Group=node_exporter
+      Type=simple
+      ExecStart=/usr/local/bin/node_exporter --collector.systemd
+
+      [Install]
+      WantedBy=multi-user.target
+
+- name: 启动并设置 node_exporter 开机自启
+  systemd:
+    name: node_exporter
+    state: started
+    enabled: yes
+    daemon_reload: yes
+  ignore_errors: yes

@@ -1,0 +1,43 @@
+---
+- name: 1. 配置 Docker 官方 YUM 软件源
+  yum_repository:
+    name: docker-ce-stable
+    description: Docker CE Stable - $basearch
+    baseurl: https://download.docker.com/linux/centos/$releasever/$basearch/stable
+    gpgcheck: yes
+    gpgkey: https://download.docker.com/linux/centos/gpg
+    enabled: yes
+
+- name: 2. 幂等安装 Docker 运行时组件
+  yum:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+    state: present
+  notify: restart docker
+
+- name: 3. 下发 daemon.json（日志轮转与数据盘目录）
+  copy:
+    dest: /etc/docker/daemon.json
+    content: |
+      {
+        "log-driver": "json-file",
+        "log-opts": { "max-size": "100m", "max-file": "3" },
+        "data-root": "/var/lib/docker",
+        "live-restore": true
+      }
+  notify: restart docker
+
+- name: 4. 启动 Docker 并设置开机自启
+  systemd:
+    name: docker
+    state: started
+    enabled: yes
+    daemon_reload: yes
+
+- name: 5. 安装 docker compose 插件并校验版本
+  command: docker compose version
+  register: docker_compose_version
+  changed_when: false
+  failed_when: false

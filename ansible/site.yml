@@ -1,0 +1,7 @@
+---
+- name: 全集群系统基线收敛与监控探针批量部署
+  hosts: all
+  become: yes
+  roles:
+    - system_baseline
+    - node_exporter

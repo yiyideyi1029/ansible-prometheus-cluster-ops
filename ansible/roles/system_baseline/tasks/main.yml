@@ -1,0 +1,30 @@
+---
+- name: 1. 配置内核网络与高并发调优参数
+  sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    state: present
+    sysctl_set: yes
+    reload: yes
+  loop:
+    - { key: 'net.ipv4.ip_forward', value: '1' }
+    - { key: 'net.ipv4.tcp_tw_reuse', value: '1' }
+    - { key: 'net.core.somaxconn', value: '65535' }
+    - { key: 'vm.swappiness', value: '10' }
+
+- name: 2. 配置文件描述符上限 (ulimit)
+  pam_limits:
+    domain: '*'
+    limit_type: "{{ item.type }}"
+    limit_item: nofile
+    value: '65535'
+  loop:
+    - { type: 'soft' }
+    - { type: 'hard' }
+
+- name: 3. 批量下发运维管理员 SSH 公钥
+  authorized_key:
+    user: root
+    state: present
+    key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+  ignore_errors: yes
